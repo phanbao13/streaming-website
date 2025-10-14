@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Streaming Website{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+        }
+        
+        .movie-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.7));
+            backdrop-filter: blur(10px);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #e50914, #b20710);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #b20710, #8a0509);
+            transform: scale(1.05);
+        }
+        
+        .skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9));
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="/" class="text-2xl font-bold text-red-600 hover:text-red-500 transition">
+                    <i class="fas fa-film mr-2"></i>StreamFlix
+                </a>
+                
+                <!-- Navigation Links -->
+                <div class="hidden md:flex space-x-6">
+                    <a href="/" class="text-white hover:text-red-500 transition">Home</a>
+                    <a href="/browse/movies" class="text-white hover:text-red-500 transition">Movies</a>
+                    <a href="/browse/series" class="text-white hover:text-red-500 transition">Series</a>
+                    <a href="/my-list" class="text-white hover:text-red-500 transition">My List</a>
+                </div>
+                
+                <!-- Search and User -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="relative hidden md:block">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search movies..." 
+                            class="search-input bg-gray-800 text-white px-4 py-2 pr-10 rounded-full border border-gray-700 focus:border-red-500"
+                        >
+                        <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="relative" id="userMenu">
+                        <button id="userMenuButton" class="flex items-center space-x-2 hover:text-red-500 transition">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                        </button>
+                        
+                        <!-- Dropdown -->
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-900 rounded-lg shadow-xl py-2">
+                            <a href="/profile" class="block px-4 py-2 hover:bg-gray-800 transition">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="/watch-history" class="block px-4 py-2 hover:bg-gray-800 transition">
+                                <i class="fas fa-history mr-2"></i>Watch History
+                            </a>
+                            <a href="/favorites" class="block px-4 py-2 hover:bg-gray-800 transition">
+                                <i class="fas fa-heart mr-2"></i>Favorites
+                            </a>
+                            <hr class="my-2 border-gray-700">
+                            <a href="/login" id="authLink" class="block px-4 py-2 hover:bg-gray-800 transition">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Login
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile Menu Toggle -->
+                    <button id="mobileMenuButton" class="md:hidden text-2xl">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 space-y-2">
+                <a href="/" class="block text-white hover:text-red-500 transition py-2">Home</a>
+                <a href="/browse/movies" class="block text-white hover:text-red-500 transition py-2">Movies</a>
+                <a href="/browse/series" class="block text-white hover:text-red-500 transition py-2">Series</a>
+                <a href="/my-list" class="block text-white hover:text-red-500 transition py-2">My List</a>
+                <input 
+                    type="text" 
+                    placeholder="Search movies..." 
+                    class="w-full bg-gray-800 text-white px-4 py-2 rounded-full border border-gray-700"
+                >
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="pt-20">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 mt-20 py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold text-red-600 mb-4">StreamFlix</h3>
+                    <p class="text-gray-400">Your ultimate streaming destination for movies and TV series.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="/" class="hover:text-white transition">Home</a></li>
+                        <li><a href="/browse/movies" class="hover:text-white transition">Movies</a></li>
+                        <li><a href="/browse/series" class="hover:text-white transition">TV Series</a></li>
+                        <li><a href="/my-list" class="hover:text-white transition">My List</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white transition">Terms of Use</a></li>
+                        <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Follow Us</h4>
+                    <div class="flex space-x-4 text-2xl">
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-gray-500 mt-8 pt-8 border-t border-gray-800">
+                <p>&copy; 2025 StreamFlix. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Base JavaScript -->
+    <script>
+        // User menu toggle
+        document.getElementById('userMenuButton').addEventListener('click', function() {
+            document.getElementById('userDropdown').classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            if (!userMenu.contains(event.target)) {
+                document.getElementById('userDropdown').classList.add('hidden');
+            }
+        });
+        
+        // Mobile menu toggle
+        document.getElementById('mobileMenuButton').addEventListener('click', function() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        });
+        
+        // Check authentication status
+        const token = localStorage.getItem('access_token');
+        const authLink = document.getElementById('authLink');
+        
+        if (token) {
+            authLink.innerHTML = '<i class="fas fa-sign-out-alt mr-2"></i>Logout';
+            authLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('access_token');
+                window.location.href = '/';
+            });
+        }
+        
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const keyword = e.target.value.trim();
+            
+            if (keyword.length > 2) {
+                searchTimeout = setTimeout(() => {
+                    window.location.href = `/search?q=${encodeURIComponent(keyword)}`;
+                }, 500);
+            }
+        });
+        
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const keyword = e.target.value.trim();
+                if (keyword.length > 0) {
+                    window.location.href = `/search?q=${encodeURIComponent(keyword)}`;
+                }
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

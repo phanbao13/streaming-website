@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Home - StreamFlix{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative h-screen">
+    <div id="heroContainer" class="relative h-full">
+        <!-- Hero Background (will be populated by JavaScript) -->
+        <div id="heroBackground" class="absolute inset-0 bg-cover bg-center">
+            <!-- Gradient Overlay -->
+            <div class="hero-gradient absolute inset-0"></div>
+        </div>
+        
+        <!-- Hero Content -->
+        <div class="relative container mx-auto px-4 h-full flex items-center">
+            <div class="max-w-2xl">
+                <h1 id="heroTitle" class="text-5xl md:text-7xl font-bold mb-4">Loading...</h1>
+                <p id="heroDescription" class="text-lg md:text-xl text-gray-300 mb-8 line-clamp-3">
+                    Discover thousands of movies and TV series
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button id="heroPlayButton" class="btn-primary px-8 py-3 rounded-full text-white font-semibold flex items-center">
+                        <i class="fas fa-play mr-2"></i> Watch Now
+                    </button>
+                    <button id="heroInfoButton" class="bg-gray-700 hover:bg-gray-600 px-8 py-3 rounded-full text-white font-semibold flex items-center transition">
+                        <i class="fas fa-info-circle mr-2"></i> More Info
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- New Releases Section -->
+<section class="container mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-6">
+        <i class="fas fa-fire text-red-600 mr-2"></i>New Releases
+    </h2>
+    <div id="newReleases" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <!-- Loading Skeletons -->
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    </div>
+</section>
+
+<!-- Movies Section -->
+<section class="container mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-6">
+        <i class="fas fa-film text-red-600 mr-2"></i>Popular Movies
+    </h2>
+    <div id="moviesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <!-- Loading Skeletons -->
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    </div>
+</section>
+
+<!-- TV Series Section -->
+<section class="container mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-6">
+        <i class="fas fa-tv text-red-600 mr-2"></i>TV Series
+    </h2>
+    <div id="seriesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <!-- Loading Skeletons -->
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+        <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    </div>
+</section>
+
+<!-- Continue Watching Section (Authenticated Users Only) -->
+<section id="continueWatchingSection" class="container mx-auto px-4 py-12 hidden">
+    <h2 class="text-3xl font-bold mb-6">
+        <i class="fas fa-history text-red-600 mr-2"></i>Continue Watching
+    </h2>
+    <div id="continueWatchingGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <!-- Will be populated by JavaScript -->
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_BASE = 'https://phimapi.com/danh-sach/phim-moi-cap-nhat';
+    
+    // Fetch and display hero movie
+    async function loadHero() {
+        try {
+            const response = await fetch(`${API_BASE}?page=1`);
+            const data = await response.json();
+            
+            if (data.status===true) {
+                const movie = data.items[0];
+                
+                document.getElementById('heroBackground').style.backgroundImage = 
+                    `url(${movie.thumb_url || movie.poster_url})`;
+                document.getElementById('heroTitle').textContent = movie.name;
+                document.getElementById('heroDescription').textContent = 
+                    movie.origin_name || 'Discover amazing content';
+                
+                document.getElementById('heroPlayButton').onclick = () => {
+                    window.location.href = `/watch/${movie.slug}`;
+                };
+                
+                document.getElementById('heroInfoButton').onclick = () => {
+                    window.location.href = `/movie/${movie.slug}`;
+                };
+            }
+        } catch (error) {
+            console.error('Error loading hero:', error);
+        }
+    }
+    
+    // Create movie card HTML
+    function createMovieCard(movie) {
+        return `
+            <div class="movie-card bg-gray-800 rounded-lg overflow-hidden" onclick="window.location.href='/movie/${movie.slug}'">
+                <div class="relative">
+                    <img 
+                        src="${movie.poster_url || movie.thumb_url}" 
+                        alt="${movie.name}"
+                        class="w-full h-80 object-cover"
+                        onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'"
+                    >
+                    <div class="absolute top-2 right-2">
+                        <span class="badge bg-red-600 text-white">
+                            ${movie.year || 'N/A'}
+                        </span>
+                    </div>
+                    ${movie.quality ? `
+                        <div class="absolute top-2 left-2">
+                            <span class="badge bg-yellow-600 text-white">
+                                ${movie.quality}
+                            </span>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${movie.name}</h3>
+                    <p class="text-xs text-gray-400 truncate">${movie.origin_name || ''}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Load new releases
+    async function loadNewReleases() {
+        try {
+            const response = await fetch(`${API_BASE}?page=1`);
+            const data = await response.json();
+            
+            if (data.status===true) {
+                const html = data.items.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+                document.getElementById('newReleases').innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading new releases:', error);
+        }
+    }
+    
+    // Load movies
+    async function loadMovies() {
+        try {
+            const response = await fetch(`${API_BASE}?page=2`);
+            const data = await response.json();
+            
+            if (data.status===true) {
+                const html = data.items.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+                document.getElementById('moviesGrid').innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading movies:', error);
+        }
+    }
+    
+    // Load TV series
+    async function loadSeries() {
+        try {
+            const response = await fetch(`${API_BASE}?page=3`);
+            const data = await response.json();
+            
+            if (data.status===true) {
+                const html = data.items.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+                document.getElementById('seriesGrid').innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading series:', error);
+        }
+    }
+    
+    // Load continue watching (for authenticated users)
+    async function loadContinueWatching() {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/watch-history?limit=12`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const history = await response.json();
+                
+                if (history.length > 0) {
+                    document.getElementById('continueWatchingSection').classList.remove('hidden');
+                    
+                    const html = history.map(item => `
+                        <div class="movie-card bg-gray-800 rounded-lg overflow-hidden" onclick="window.location.href='/watch/${item.movie_slug}'">
+                            <div class="relative">
+                                <div class="w-full h-80 bg-gray-700 flex items-center justify-center">
+                                    <i class="fas fa-play-circle text-6xl text-gray-500"></i>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
+                                    <div class="h-full bg-red-600" style="width: ${Math.min(100, (item.progress / 1800) * 100)}%"></div>
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <h3 class="font-semibold text-sm truncate">${item.movie_name}</h3>
+                                ${item.episode_name ? `<p class="text-xs text-gray-400 truncate">${item.episode_name}</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('continueWatchingGrid').innerHTML = html;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading watch history:', error);
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadHero();
+        loadNewReleases();
+        loadMovies();
+        loadSeries();
+        loadContinueWatching();
+    });
+</script>
+{% endblock %}

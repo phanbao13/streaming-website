@@ -1,0 +1,135 @@
+{% extends "base.html" %} {% block title %}Home - StreamFlix{% endblock %} {%
+block content %}
+<!-- Movie Details Section -->
+<section id="hero" class="relative flex flex-col md:flex-row items-start gap-6 px-6 py-12 max-w-6xl mx-auto">
+  <img
+    id="poster"
+    src=""
+    alt="Poster"
+    class="w-64 md:w-80 rounded-xl shadow-lg" />
+  <div>
+    <h1 id="title" class="text-3xl font-bold mb-2"></h1>
+    <p id="originName" class="italic text-gray-400 mb-4"></p>
+    <div class="space-y-1 text-sm">
+      <p><span class="font-semibold">Năm:</span> <span id="year"></span></p>
+      <p>
+        <span class="font-semibold">Thể loại:</span> <span id="genres"></span>
+      </p>
+      <p>
+        <span class="font-semibold">Quốc gia:</span> <span id="country"></span>
+      </p>
+      <p>
+        <span class="font-semibold">Đạo diễn:</span> <span id="director"></span>
+      </p>
+      <p>
+        <span class="font-semibold">Diễn viên:</span> <span id="actors"></span>
+      </p>
+    </div>
+    <div class="mt-6 flex gap-4">
+      <button
+        id="watchBtn"
+        class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">
+        Xem phim
+      </button>
+      <button
+        id="infoBtn"
+        class="bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded-lg">
+        Chi tiết
+      </button>
+    </div>
+  </div>
+</section>
+<!-- DESCRIPTION -->
+<section
+  id="description"
+  class="px-6 py-10 bg-gray-900 max-w-6xl mx-auto rounded-xl shadow-inner">
+  <h2 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">
+    Nội dung phim
+  </h2>
+  <p id="content" class="text-gray-300 leading-relaxed"></p>
+</section>
+
+<!-- EPISODES -->
+<section id="episodes" class="px-6 py-10 max-w-6xl mx-auto">
+  <h2 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">
+    Danh sách tập
+  </h2>
+  <div id="episodeList" class="flex flex-wrap gap-3"></div>
+</section>
+
+<!-- RELATED MOVIES -->
+<section
+  id="related"
+  class="px-6 py-10 bg-gray-900 max-w-6xl mx-auto rounded-xl shadow-inner">
+  <h2 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">
+    Phim liên quan
+  </h2>
+  <div
+    id="relatedList"
+    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5"></div>
+</section>
+
+{% endblock %} {% block extra_js %}
+<script>
+  const API_BASE = 'https://phimapi.com/phim/';
+  const slug = "{{ slug }}";  // Get slug from template context
+  async function loadMovieDetails() {
+    try {
+      const response = await fetch(`${API_BASE}${slug}`);
+      const data = await response.json();
+      console.log(data.movie)
+      if (data.status===true) {
+          const movie = data.movie
+          // HERO
+          document.getElementById('poster').src = movie.poster_url;
+          document.getElementById('title').textContent = movie.name;
+          document.getElementById('originName').textContent = movie.origin_name;
+          document.getElementById('year').textContent = movie.year;
+          document.getElementById('genres').textContent = movie.category.map(c => c.name).join(', ');
+          document.getElementById('country').textContent = movie.country.map(c => c.name).join(', ');
+          document.getElementById('director').textContent = movie.director;
+          document.getElementById('actors').textContent = movie.actor
+          // DESCRIPTION
+          document.getElementById('content').textContent = movie.content;
+          // WATCH/INFO Buttons
+          document.getElementById('watchBtn').onclick = () => {
+            const firstEp = movie.episodes?.[0]?.server_data?.[0];
+            if (firstEp) window.open(firstEp.link_embed, '_blank');
+          };
+          document.getElementById('infoBtn').onclick = () => {
+            window.scrollTo({ top: document.getElementById('description').offsetTop, behavior: 'smooth' });
+          };
+          // EPISODES
+          const epList = document.getElementById('episodeList');
+          data.episodes?.forEach(server => {
+            server.server_data.forEach(ep => {
+              const a = document.createElement('a');
+              a.href = ep.link_embed;
+              a.target = "_blank";
+              a.textContent = ep.name;
+              a.className = "bg-gray-800 hover:bg-red-700 transition px-4 py-2 rounded-lg text-sm font-medium";
+              epList.appendChild(a);
+            });
+          })
+          // RELATED MOVIES
+          const relatedList = document.getElementById('relatedList');
+          data.related_movies?.forEach(r => {
+            const div = document.createElement('div');
+            div.className = "movie bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:scale-105 transition-transform";
+            div.innerHTML = `
+              <img src="${r.thumb_url || r.poster_url}" alt="${r.name}" class="w-full h-64 object-cover">
+              <div class="p-2 text-sm text-center">${r.name}</div>
+            `;
+            relatedList.appendChild(div);
+          });
+  
+      } 
+    } catch (err) {
+      console.error('Error loading movie:', err);
+      }
+  }  
+  
+  // Load movie details on page load
+  loadMovieDetails();
+</script>
+{% endblock %}
