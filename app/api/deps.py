@@ -1,5 +1,5 @@
 from typing import Generator, Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
@@ -56,9 +56,10 @@ async def get_current_active_user(
 
 
 def get_optional_user(
-    db: Session = Depends(get_db), token: Optional[str] = Depends(oauth2_scheme)
+    request: Request, db: Session = Depends(get_db) 
 ) -> Optional[User]:
     """Get user if token provided, otherwise return None (for public endpoints)"""
+    token = request.headers.get("authorization")
     if not token:
         return None
 
