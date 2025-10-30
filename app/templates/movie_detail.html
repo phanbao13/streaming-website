@@ -1,96 +1,159 @@
-{% extends "base.html" %} {% block title %}Home - StreamFlix{% endblock %} {%
-block content %}
+{% extends "base.html" %}
+
+{% block title %}Movie Detail - StreamFlix{% endblock %}
+
+{% block content %}
+<!-- Movie Hero Section -->
+<section id="movieHero" class="relative h-screen">
+    <div class="absolute inset-0 bg-cover bg-center" id="movieBackdrop">
+        <div class="hero-gradient absolute inset-0"></div>
+    </div>
+    
+    <div class="relative container mx-auto px-4 h-full flex items-end pb-20">
+        <div class="max-w-4xl">
+            <h1 id="movieTitle" class="text-4xl md:text-6xl font-bold mb-4">Loading...</h1>
+            <p id="movieOriginName" class="text-xl text-gray-300 mb-4"></p>
+            
+            <div class="flex flex-wrap gap-4 mb-6">
+                <span id="movieYear" class="badge bg-gray-700"></span>
+                <span id="movieQuality" class="badge bg-yellow-600"></span>
+                <span id="movieLang" class="badge bg-blue-600"></span>
+                <span id="movieType" class="badge bg-green-600"></span>
+            </div>
+            
+            <p id="movieDescription" class="text-lg text-gray-300 mb-8 line-clamp-3"></p>
+            
+            <div class="flex flex-wrap gap-4">
+                <button id="watchButton" class="btn-primary px-8 py-3 rounded-full text-white font-semibold flex items-center">
+                    <i class="fas fa-play mr-2"></i> Watch Now
+                </button>
+                <button id="favoriteButton" class="bg-gray-700 hover:bg-gray-600 px-8 py-3 rounded-full text-white font-semibold flex items-center transition">
+                    <i class="far fa-heart mr-2"></i> Add to List
+                </button>
+                <button id="trailerButton" class="bg-gray-700 hover:bg-gray-600 px-8 py-3 rounded-full text-white font-semibold flex items-center transition">
+                    <i class="fas fa-video mr-2"></i> Trailer
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Movie Details Section -->
-<section id="hero" class="relative flex flex-col md:flex-row items-start gap-6 px-6 py-12 max-w-6xl mx-auto">
-  <img
-    id="poster"
-    src=""
-    alt="Poster"
-    class="w-64 md:w-80 rounded-xl shadow-lg" />
-  <div>
-    <h1 id="title" class="text-3xl font-bold mb-2"></h1>
-    <p id="originName" class="italic text-gray-400 mb-4"></p>
-    <div class="space-y-1 text-sm">
-      <p><span class="font-semibold">Năm:</span> <span id="year"></span></p>
-      <p>
-        <span class="font-semibold">Thể loại:</span> <span id="genres"></span>
-      </p>
-      <p>
-        <span class="font-semibold">Quốc gia:</span> <span id="country"></span>
-      </p>
-      <p>
-        <span class="font-semibold">Đạo diễn:</span> <span id="director"></span>
-      </p>
-      <p>
-        <span class="font-semibold">Diễn viên:</span> <span id="actors"></span>
-      </p>
+<section class="container mx-auto px-4 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Info -->
+        <div class="lg:col-span-2">
+            <h2 class="text-3xl font-bold mb-6">About</h2>
+            <p id="fullDescription" class="text-gray-300 mb-6 leading-relaxed"></p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <h3 class="font-semibold text-gray-400 mb-2">Director</h3>
+                    <p id="movieDirector" class="text-white">-</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-400 mb-2">Time</h3>
+                    <p id="movieTime" class="text-white">-</p>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="font-semibold text-gray-400 mb-2">Cast</h3>
+                <p id="movieActors" class="text-white">-</p>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="font-semibold text-gray-400 mb-2">Genres</h3>
+                <div id="movieCategories" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div>
+            <img id="moviePoster" src="" alt="Poster" class="w-full rounded-lg shadow-lg mb-6">
+            
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h3 class="font-semibold mb-4">More Information</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Country:</span>
+                        <span id="movieCountry" class="text-white">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Views:</span>
+                        <span id="movieViews" class="text-white">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Episodes:</span>
+                        <span id="movieEpisodes" class="text-white">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Status:</span>
+                        <span id="movieStatus" class="text-white">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mt-6 flex gap-4">
-      <button
-        id="watchBtn"
-        class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">
-        Xem phim
-      </button>
-      <button
-        id="infoBtn"
-        class="bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded-lg">
-        Chi tiết
-      </button>
+    
+    <!-- Episodes Section (for series) -->
+    <div id="episodesSection" class="mt-12 hidden">
+        <h2 class="text-3xl font-bold mb-6">Episodes</h2>
+        <div id="episodesList"></div>
     </div>
-  </div>
-</section>
-<!-- DESCRIPTION -->
-<section
-  id="description"
-  class="px-6 py-10 bg-gray-900 max-w-6xl mx-auto rounded-xl shadow-inner">
-  <h2 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">
-    Nội dung phim
-  </h2>
-  <p id="content" class="text-gray-300 leading-relaxed"></p>
+    
+    <!-- Similar Movies -->
+    <div class="mt-12">
+        <h2 class="text-3xl font-bold mb-6">Similar Movies</h2>
+        <div id="similarMovies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
 </section>
 
-<!-- EPISODES -->
-<section id="episodes" class="px-6 py-10 max-w-6xl mx-auto">
-  <h2 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">
-    Danh sách tập
-  </h2>
-  <div id="episodeList" class="flex flex-wrap gap-3"></div>
-</section>
+<!-- Trailer Modal -->
+<div id="trailerModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex items-center justify-center">
+    <div class="relative w-full max-w-5xl mx-4">
+        <button id="closeTrailer" class="absolute -top-10 right-0 text-white text-3xl hover:text-red-500">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="trailerContainer" class="aspect-video bg-black rounded-lg overflow-hidden">
+            <!-- Trailer will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-<!-- RELATED MOVIES -->
-<section
-  id="related"
-  class="px-6 py-10 bg-gray-900 max-w-6xl mx-auto rounded-xl shadow-inner">
-  <h2 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">
-    Phim liên quan
-  </h2>
-  <div
-    id="relatedList"
-    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-5"></div>
-</section>
-
-{% endblock %} {% block extra_js %}
+{% block extra_js %}
 <script>
-  const API_BASE = 'https://phimapi.com/phim/';
+  const API_BASE = '/api/v1';
   const slug = "{{ slug }}";  // Get slug from template context
+  let movieData = null;
+  let movieEpisodes = null;
+  let category_slug = null;
+  
   async function loadMovieDetails() {
     try {
-      const response = await fetch(`${API_BASE}${slug}`);
+      const response = await fetch(`${API_BASE}/movies/${slug}`);
       const data = await response.json();
-      console.log(data.movie)
-      if (data.status===true) {
-          const movie = data.movie
+      
+      if (data.success) {
+          movieData = data.data
+          movieEpisodes = data.episodes
+          category_slug = data.data.category?.[0]?.slug || null;
+          displayMovieDetails(movieData);
+          checkFavoriteStatus();
           // HERO
-          document.getElementById('poster').src = movie.poster_url;
-          document.getElementById('title').textContent = movie.name;
-          document.getElementById('originName').textContent = movie.origin_name;
-          document.getElementById('year').textContent = movie.year;
-          document.getElementById('genres').textContent = movie.category.map(c => c.name).join(', ');
-          document.getElementById('country').textContent = movie.country.map(c => c.name).join(', ');
-          document.getElementById('director').textContent = movie.director;
-          document.getElementById('actors').textContent = movie.actor
+          document.getElementById('poster').src = movieData.poster_url;
+          document.getElementById('title').textContent = movieData.name;
+          document.getElementById('originName').textContent = movieData.origin_name;
+          document.getElementById('year').textContent = movieData.year;
+          document.getElementById('genres').textContent = movieData.category.map(c => c.name).join(', ');
+          document.getElementById('country').textContent = movieData.country.map(c => c.name).join(', ');
+          document.getElementById('director').textContent = movieData.director;
+          document.getElementById('actors').textContent = movieData.actor
           // DESCRIPTION
-          document.getElementById('content').textContent = movie.content;
+          document.getElementById('content').textContent = movieData.content;
           // WATCH/INFO Buttons
           document.getElementById('watchBtn').onclick = () => {
             const firstEp = movie.episodes?.[0]?.server_data?.[0];
@@ -100,8 +163,8 @@ block content %}
             window.scrollTo({ top: document.getElementById('description').offsetTop, behavior: 'smooth' });
           };
           // EPISODES
-          const epList = document.getElementById('episodeList');
-          data.episodes?.forEach(server => {
+          const epList = document.getElementById('episodesList');
+          movieEpisodes?.forEach(server => {
             server.server_data.forEach(ep => {
               const a = document.createElement('a');
               a.href = ep.link_embed;
@@ -129,7 +192,285 @@ block content %}
       }
   }  
   
-  // Load movie details on page load
-  loadMovieDetails();
+  function displayMovieDetails(movie) {
+        // Hero section
+        document.getElementById('movieBackdrop').style.backgroundImage = 
+            `url(${movie.thumb_url || movie.poster_url})`;
+        document.getElementById('movieTitle').textContent = movie.name;
+        document.getElementById('movieOriginName').textContent = movie.origin_name || '';
+        document.getElementById('movieDescription').textContent = movie.content || 'No description available';
+        
+        // Badges
+        document.getElementById('movieYear').textContent = movie.year || 'N/A';
+        document.getElementById('movieQuality').textContent = movie.quality || 'HD';
+        document.getElementById('movieLang').textContent = movie.lang || 'Vietsub';
+        document.getElementById('movieType').textContent = movie.type === 'series' ? 'TV Series' : 'Movie';
+        
+        // Full description
+        document.getElementById('fullDescription').textContent = movie.content || 'No description available';
+        
+        // Details
+        document.getElementById('movieDirector').textContent = 
+            (movie.director && movie.director.length > 0) ? movie.director.join(', ') : 'N/A';
+        document.getElementById('movieTime').textContent = movie.time || 'N/A';
+        document.getElementById('movieActors').textContent = 
+            (movie.actor && movie.actor.length > 0) ? movie.actor.join(', ') : 'N/A';
+        
+        // Categories
+        if (movie.category && movie.category.length > 0) {
+            const categoriesHTML = movie.category.map(cat => 
+                `<span class="badge bg-red-600">${cat.name}</span>`
+            ).join('');
+            document.getElementById('movieCategories').innerHTML = categoriesHTML;
+        }
+        
+        // Sidebar
+        document.getElementById('moviePoster').src = movie.poster_url || movie.thumb_url;
+        document.getElementById('movieCountry').textContent = 
+            (movie.country && movie.country.length > 0) ? movie.country[0].name : 'N/A';
+        document.getElementById('movieViews').textContent = movie.view || '0';
+        document.getElementById('movieEpisodes').textContent = movie.episode_total || 'N/A';
+        document.getElementById('movieStatus').textContent = movie.episode_current || 'Completed';
+        
+        // Episodes (for series)
+        if (movieEpisodes) {
+            displayEpisodes(movieEpisodes);
+        }
+        
+        // Watch button
+        document.getElementById('watchButton').onclick = () => {
+            window.location.href = `/watch/${slug}`;
+        };
+        
+        // Trailer button
+        if (movie.trailer_url) {
+            document.getElementById('trailerButton').onclick = () => {
+                showTrailer(movie.trailer_url);
+            };
+        } else {
+            document.getElementById('trailerButton').style.display = 'none';
+        }
+        
+        // Load similar movies
+        loadSimilarMovies();
+    }
+    function displayEpisodes(episodesData) {
+        document.getElementById('episodesSection').classList.remove('hidden');
+        
+        let html = '';
+        episodesData.forEach((server, serverIndex) => {
+            html += `
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-4 text-red-600 flex items-center">
+                        <i class="fas fa-server mr-2"></i>${server.server_name}
+                        <button 
+                            class="ml-auto text-sm text-gray-300 hover:text-white transition"
+                            onclick="toggleServer(${serverIndex})"
+                            id="toggle-${serverIndex}"
+                        >
+                            Show more ▼
+                        </button>
+                    </h3>
+                    <!-- Wrapper with relative positioning for shadow -->
+                    <div class="relative">
+                        <!-- Episode container with scroll -->
+                        <div 
+                            id="server-${serverIndex}" 
+                            class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-32 overflow-y-auto transition-all duration-500 ease-in-out scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+                        >
+            `;
+            
+            server.server_data.forEach((episode, index) => {
+                html += `
+                    <button 
+                        onclick="playEpisode('${slug}', '${episode.slug}')"
+                        class="bg-gray-800 hover:bg-red-600 px-4 py-3 rounded text-sm font-semibold transition"
+                    >
+                        ${episode.name}
+                    </button>
+                `;
+            });
+            
+            // Close episode container and add shadow overlay inside wrapper
+            html += `
+                        </div>
+                        <!-- Shadow overlay -->
+                        <div 
+                            id="shadow-${serverIndex}"
+                            class="absolute bottom-0 left-0 w-full h-12 pointer-events-none bg-gradient-to-t from-gray-900 to-transparent"
+                        ></div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('episodesList').innerHTML = html;
+    }
+    
+    function playEpisode(movieSlug, episodeSlug) {
+        window.location.href = `/watch/${movieSlug}?episode=${episodeSlug}`;
+    }
+    
+    async function loadSimilarMovies() {
+        try {
+            const response = await fetch(`${API_BASE}/movies/category/${category_slug}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const html = data.data.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+                document.getElementById('similarMovies').innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading similar movies:', error);
+        }
+    }
+    
+    function createMovieCard(movie) {
+        const url = `https://phimimg.com/${movie.poster_url || movie.thumb_url}`;
+        return `
+            <div class="movie-card bg-gray-800 rounded-lg overflow-hidden" onclick="window.location.href='/movie/${movie.slug}'">
+                <img 
+                    src="${url}" 
+                    alt="${movie.name}"
+                    class="w-full h-80 object-cover"
+                    onerror="this.onerror=null;this.src='/static/images/default_poster.jpg';"
+                >
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${movie.name}</h3>
+                    <p class="text-xs text-gray-400 truncate">${movie.origin_name || ''}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    async function checkFavoriteStatus() {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/favorites/check/${slug}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                updateFavoriteButton(data.is_favorite);
+            }
+        } catch (error) {
+            console.error('Error checking favorite:', error);
+        }
+    }
+    
+    function updateFavoriteButton(isFavorite) {
+        const btn = document.getElementById('favoriteButton');
+        if (isFavorite) {
+            btn.innerHTML = '<i class="fas fa-heart mr-2"></i> Remove from List';
+            btn.onclick = removeFavorite;
+        } else {
+            btn.innerHTML = '<i class="far fa-heart mr-2"></i> Add to List';
+            btn.onclick = addFavorite;
+        }
+    }
+    
+    async function addFavorite() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/favorites`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    movie_slug: slug,
+                    movie_name: movieData.name,
+                    poster_url: movieData.poster_url
+                })
+            });
+            
+            if (response.ok) {
+                updateFavoriteButton(true);
+            }
+        } catch (error) {
+            console.error('Error adding favorite:', error);
+        }
+    }
+    
+    async function removeFavorite() {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/favorites/${slug}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                updateFavoriteButton(false);
+            }
+        } catch (error) {
+            console.error('Error removing favorite:', error);
+        }
+    }
+    
+    function showTrailer(trailerUrl) {
+        const modal = document.getElementById('trailerModal');
+        const container = document.getElementById('trailerContainer');
+        
+        // Extract YouTube video ID
+        const videoId = trailerUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+        
+        if (videoId) {
+            container.innerHTML = `
+                <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                ></iframe>
+            `;
+        }
+        
+        modal.classList.remove('hidden');
+    }
+    
+    document.getElementById('closeTrailer').onclick = () => {
+        const modal = document.getElementById('trailerModal');
+        modal.classList.add('hidden');
+        document.getElementById('trailerContainer').innerHTML = '';
+    };
+
+    function toggleServer(index) {
+        const container = document.getElementById(`server-${index}`);
+        const shadow = document.getElementById(`shadow-${index}`);
+        const toggleBtn = document.getElementById(`toggle-${index}`);
+        const isExpanded = container.classList.contains('expanded');
+
+        if (!isExpanded) {
+            // Expand
+            container.classList.add('expanded');
+            container.classList.remove('max-h-32');
+            container.classList.add('max-h-96'); // Set a reasonable max height for scrolling
+            shadow.classList.add('hidden');
+            toggleBtn.textContent = 'Show less ▲';
+        } else {
+            // Collapse
+            container.classList.remove('expanded', 'max-h-96');
+            container.classList.add('max-h-32');
+            shadow.classList.remove('hidden');
+            toggleBtn.textContent = 'Show more ▼';
+            container.scrollTop = 0; // Reset scroll position
+        }
+}
+  // Initialize
+  document.addEventListener('DOMContentLoaded', loadMovieDetails);
 </script>
 {% endblock %}

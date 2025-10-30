@@ -93,16 +93,16 @@
 
 {% block extra_js %}
 <script>
-    const API_BASE = 'https://phimapi.com/danh-sach/phim-moi-cap-nhat';
+    const API_BASE = '/api/v1';
     
     // Fetch and display hero movie
     async function loadHero() {
         try {
-            const response = await fetch(`${API_BASE}?page=1`);
+            const response = await fetch(`${API_BASE}/movies/new`);
             const data = await response.json();
             
-            if (data.status===true) {
-                const movie = data.items[0];
+            if (data.success) {
+                const movie = data.data[0];
                 
                 document.getElementById('heroBackground').style.backgroundImage = 
                     `url(${movie.thumb_url || movie.poster_url})`;
@@ -119,7 +119,7 @@
                 };
             }
         } catch (error) {
-            console.error('Error loading hero:', error);
+            console.error('Error loading', error);
         }
     }
     
@@ -155,14 +155,46 @@
         `;
     }
     
+    function createMovieCard_(movie) {
+        const url = `https://phimimg.com/${movie.poster_url || movie.thumb_url}`;
+        return `
+            <div class="movie-card bg-gray-800 rounded-lg overflow-hidden" onclick="window.location.href='/movie/${movie.slug}'">
+                <div class="relative">
+                    <img 
+                        src="${url}" 
+                        alt="${movie.name}"
+                        class="w-full h-80 object-cover"
+                        onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'"
+                    >
+                    <div class="absolute top-2 right-2">
+                        <span class="badge bg-red-600 text-white">
+                            ${movie.year || 'N/A'}
+                        </span>
+                    </div>
+                    ${movie.quality ? `
+                        <div class="absolute top-2 left-2">
+                            <span class="badge bg-yellow-600 text-white">
+                                ${movie.quality}
+                            </span>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${movie.name}</h3>
+                    <p class="text-xs text-gray-400 truncate">${movie.origin_name || ''}</p>
+                </div>
+            </div>
+        `;
+    }
+
     // Load new releases
     async function loadNewReleases() {
         try {
-            const response = await fetch(`${API_BASE}?page=1`);
+            const response = await fetch(`${API_BASE}/movies/new`);
             const data = await response.json();
             
-            if (data.status===true) {
-                const html = data.items.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+            if (data.success) {
+                const html = data.data.slice(0, 12).map(movie => createMovieCard(movie)).join('');
                 document.getElementById('newReleases').innerHTML = html;
             }
         } catch (error) {
@@ -173,11 +205,11 @@
     // Load movies
     async function loadMovies() {
         try {
-            const response = await fetch(`${API_BASE}?page=2`);
+            const response = await fetch(`${API_BASE}/movies/movies`);
             const data = await response.json();
             
-            if (data.status===true) {
-                const html = data.items.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+            if (data.success) {
+                const html = data.data.slice(0, 12).map(movie => createMovieCard_(movie)).join('');
                 document.getElementById('moviesGrid').innerHTML = html;
             }
         } catch (error) {
@@ -188,11 +220,11 @@
     // Load TV series
     async function loadSeries() {
         try {
-            const response = await fetch(`${API_BASE}?page=3`);
+            const response = await fetch(`${API_BASE}/movies/series`);
             const data = await response.json();
-            
-            if (data.status===true) {
-                const html = data.items.slice(0, 12).map(movie => createMovieCard(movie)).join('');
+
+            if (data.success) {
+                const html = data.data.slice(0, 12).map(movie => createMovieCard_(movie)).join('');
                 document.getElementById('seriesGrid').innerHTML = html;
             }
         } catch (error) {

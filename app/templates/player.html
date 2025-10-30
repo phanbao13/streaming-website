@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Watch - StreamFlix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+<style>
+    body {
+        background: #000;
+    }
+    .player-container {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .plyr {
+        --plyr-color-main: #e50914;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Video Player -->
+    <div class="player-container mb-8">
+        <div id="videoPlayerContainer" class="bg-black rounded-lg overflow-hidden">
+            <video id="player" controls crossorigin playsinline></video>
+        </div>
+    </div>
+    
+    <!-- Movie Info -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+            <h1 id="movieTitle" class="text-3xl font-bold mb-4">Loading...</h1>
+            <p id="currentEpisode" class="text-gray-400 mb-4"></p>
+            <p id="movieDescription" class="text-gray-300 mb-6"></p>
+            
+            <div class="flex flex-wrap gap-4">
+                <button id="prevEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-full transition hidden">
+                    <i class="fas fa-backward mr-2"></i> Previous
+                </button>
+                <button id="nextEpisodeBtn" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full transition hidden">
+                    Next <i class="fas fa-forward ml-2"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div>
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h3 class="font-semibold mb-4">Video Settings</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm text-gray-400">Server:</label>
+                        <select id="serverSelect" class="w-full bg-gray-700 text-white px-4 py-2 rounded mt-2">
+                            <option>Loading...</option>
+                        </select>
+                    </div>
+                    <div id="qualitySelector" class="hidden">
+                        <label class="text-sm text-gray-400">Quality:</label>
+                        <select id="qualitySelect" class="w-full bg-gray-700 text-white px-4 py-2 rounded mt-2">
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Episodes List (for series) -->
+    <div id="episodesSection" class="mt-8 hidden">
+        <h2 class="text-2xl font-bold mb-4">Episodes</h2>
+        <div id="episodesList" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+<script>
+    const API_BASE = 'https://phimapi.com/phim/';
+    const slug = "{{ slug }}";
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentEpisodeSlug = urlParams.get('episode');
+    
+    let movieData = null;
+    let player = null;
+    let currentServerIndex = 0;
+    let currentEpisodeIndex = 0;
+    
+    async function loadMovieData() {
+        try {
+            const response = await fetch(`${API_BASE}${slug}`);
+            const data = await response.json();
+            
+            if (data.status===true) {
+                movieData = data.movie;
+                displayMovieInfo();
+                setupPlayer();
+                saveWatchHistory();
+            }
+        } catch (error) {
+            console.error('Error loading movie:', error);
+        }
+    }
+    
+    function displayMovieInfo() {
+        document.getElementById('movieTitle').textContent = movieData.name;
+        document.getElementById('movieDescription').textContent = movieData.content || '';
+        
+        // Show episodes for series
+        if (data.type === 'series' && data.episodes && data.episodes.length > 0) {
+            displayEpisodes();
+        }
+    }
+    
+    function displayEpisodes() {
+        document.getElementById('episodesSection').classList.remove('hidden');
+        
+        const episodes = data.episodes[currentServerIndex]?.server_data || [];
+        const html = episodes.map((ep, index) => {
+            const isActive = currentEpisodeSlug === ep.slug || (!currentEpisodeSlug && index === 0);
+            return `
+                <button 
+                    onclick="changeEpisode(${index})"
+                    class="px-4 py-3 rounded font-semibold transition ${
+                        isActive ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+                    }"
+                >
+                    ${ep.name}
+                </button>
+            `;
+        }).join('');
+        
+        document.getElementById('episodesList').innerHTML = html;
+        
+        // Setup next/prev buttons
+        if (episodes.length > 1) {
+            updateNavigationButtons();
+        }
+    }
+    
+    function setupPlayer() {
+        const episodes = movieData.episodes;
+        
+        if (!episodes || episodes.length === 0) {
+            // Single movie
+            loadVideoSource(movieData);
+            return;
+        }
+        
+        // Find current episode
+        const serverData = episodes[currentServerIndex]?.server_data || [];
+        if (currentEpisodeSlug) {
+            currentEpisodeIndex = serverData.findIndex(ep => ep.slug === currentEpisodeSlug);
+            if (currentEpisodeIndex === -1) currentEpisodeIndex = 0;
+        }
+        
+        loadVideoSource(serverData[currentEpisodeIndex]);
+        
+        // Setup server selector
+        const serverSelect = document.getElementById('serverSelect');
+        serverSelect.innerHTML = episodes.map((server, index) => 
+            `<option value="${index}">${server.server_name}</option>`
+        ).join('');
+        
+        serverSelect.onchange = (e) => {
+            currentServerIndex = parseInt(e.target.value);
+            currentEpisodeIndex = 0;
+            displayEpisodes();
+            loadVideoSource(episodes[currentServerIndex].server_data[0]);
+        };
+    }
+    
+    function loadVideoSource(source) {
+        const videoElement = document.getElementById('player');
+        
+        // Update episode info
+        if (source.name) {
+            document.getElementById('currentEpisode').textContent = `Episode: ${source.name}`;
+        }
+        
+        // Determine video source
+        let videoUrl = source.link_m3u8 || source.link_embed || source.filename;
+        
+        if (videoUrl) {
+            // If it's an embed link, use iframe
+            if (videoUrl.includes('embed') || videoUrl.includes('iframe')) {
+                document.getElementById('videoPlayerContainer').innerHTML = `
+                    <iframe 
+                        src="${videoUrl}" 
+                        width="100%" 
+                        height="600" 
+                        frameborder="0" 
+                        allowfullscreen
+                        allow="autoplay; encrypted-media"
+                    ></iframe>
+                `;
+            } else {
+                // Use Plyr player
+                videoElement.src = videoUrl;
+                
+                if (!player) {
+                    player = new Plyr(videoElement, {
+                        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+                        settings: ['quality', 'speed'],
+                        quality: {
+                            default: 720,
+                            options: [1080, 720, 480, 360]
+                        }
+                    });
+                    
+                    // Auto-play
+                    player.play();
+                    
+                    // Save progress periodically
+                    player.on('timeupdate', saveProgress);
+                }
+            }
+        } else {
+            document.getElementById('videoPlayerContainer').innerHTML = `
+                <div class="flex items-center justify-center h-96 text-gray-400">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-6xl mb-4"></i>
+                        <p>Video source not available</p>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function changeEpisode(episodeIndex) {
+        currentEpisodeIndex = episodeIndex;
+        const episodes = movieData.episodes[currentServerIndex].server_data;
+        const episode = episodes[episodeIndex];
+        
+        // Update URL
+        const newUrl = `/watch/${slug}?episode=${episode.slug}`;
+        window.history.pushState({}, '', newUrl);
+        currentEpisodeSlug = episode.slug;
+        
+        loadVideoSource(episode);
+        displayEpisodes();
+        updateNavigationButtons();
+        saveWatchHistory();
+    }
+    
+    function updateNavigationButtons() {
+        const episodes = movieData.episodes[currentServerIndex].server_data;
+        const prevBtn = document.getElementById('prevEpisodeBtn');
+        const nextBtn = document.getElementById('nextEpisodeBtn');
+        
+        if (currentEpisodeIndex > 0) {
+            prevBtn.classList.remove('hidden');
+            prevBtn.onclick = () => changeEpisode(currentEpisodeIndex - 1);
+        } else {
+            prevBtn.classList.add('hidden');
+        }
+        
+        if (currentEpisodeIndex < episodes.length - 1) {
+            nextBtn.classList.remove('hidden');
+            nextBtn.onclick = () => changeEpisode(currentEpisodeIndex + 1);
+        } else {
+            nextBtn.classList.add('hidden');
+        }
+    }
+    
+    let progressTimeout;
+    function saveProgress() {
+        if (!player) return;
+        
+        clearTimeout(progressTimeout);
+        progressTimeout = setTimeout(async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+            
+            try {
+                await fetch(`${API_BASE}/users/watch-history`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        movie_slug: slug,
+                        movie_name: movieData.name,
+                        episode_slug: currentEpisodeSlug || null,
+                        episode_name: currentEpisodeSlug ? `Episode ${currentEpisodeIndex + 1}` : null,
+                        progress: player.currentTime
+                    })
+                });
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }, 5000); // Save every 5 seconds
+    }
+    
+    async function saveWatchHistory() {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        
+        try {
+            await fetch(`${API_BASE}/users/watch-history`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    movie_slug: slug,
+                    movie_name: movieData.name,
+                    episode_slug: currentEpisodeSlug || null,
+                    episode_name: currentEpisodeSlug ? `Episode ${currentEpisodeIndex + 1}` : null,
+                    progress: 0
+                })
+            });
+        } catch (error) {
+            console.error('Error saving watch history:', error);
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadMovieData);
+</script>
+{% endblock %}

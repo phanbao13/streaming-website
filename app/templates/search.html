@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-24">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-4">
+            <i class="fas fa-search text-red-600 mr-2"></i>Search Results
+        </h1>
+        <p id="searchQuery" class="text-gray-400"></p>
+    </div>
+    
+    <!-- Search Input -->
+    <div class="max-w-2xl mb-8">
+        <div class="relative">
+            <input 
+                type="text" 
+                id="searchInput"
+                placeholder="Search for movies or TV series..." 
+                class="w-full bg-gray-800 text-white px-6 py-4 pr-12 rounded-full border border-gray-700 focus:outline-none focus:border-red-500"
+            >
+            <button class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
+                <i class="fas fa-search text-xl"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-12">
+        <i class="fas fa-spinner fa-spin text-4xl text-red-600 mb-4"></i>
+        <p class="text-gray-400">Searching...</p>
+    </div>
+    
+    <!-- Results -->
+    <div id="resultsContainer" class="hidden">
+        <div class="mb-6">
+            <p id="resultsCount" class="text-lg text-gray-400"></p>
+        </div>
+        
+        <div id="resultsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Results will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- No Results -->
+    <div id="noResults" class="hidden text-center py-12">
+        <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
+        <h2 class="text-2xl font-bold mb-2">No results found</h2>
+        <p class="text-gray-400">Try searching with different keywords</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_BASE = '/api/v1';
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('q');
+    
+    async function performSearch(keyword) {
+        if (!keyword || keyword.length < 2) return;
+        
+        // Show loading
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('resultsContainer').classList.add('hidden');
+        document.getElementById('noResults').classList.add('hidden');
+        
+        try {
+            const response = await fetch(`${API_BASE}/search/?keyword=${encodeURIComponent(keyword)}&limit=50`);
+            const data = await response.json();
+            
+            document.getElementById('loadingState').classList.add('hidden');
+            
+            if (data.success && data.data && data.data.length > 0) {
+                displayResults(data.data, keyword);
+            } else {
+                showNoResults();
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            document.getElementById('loadingState').classList.add('hidden');
+            showNoResults();
+        }
+    }
+    
+    function displayResults(results, keyword) {
+        document.getElementById('searchQuery').textContent = `Search results for "${keyword}"`;
+        document.getElementById('resultsCount').textContent = `Found ${results.length} results`;
+        
+        const html = results.map(movie => createMovieCard(movie)).join('');
+        document.getElementById('resultsGrid').innerHTML = html;
+        document.getElementById('resultsContainer').classList.remove('hidden');
+    }
+    
+    function showNoResults() {
+        document.getElementById('noResults').classList.remove('hidden');
+    }
+    
+    function createMovieCard(movie) {
+        return `
+            <div class="movie-card bg-gray-800 rounded-lg overflow-hidden" onclick="window.location.href='/movie/${movie.slug}'">
+                <div class="relative">
+                    <img 
+                        src="${movie.poster_url || movie.thumb_url}" 
+                        alt="${movie.name}"
+                        class="w-full h-80 object-cover"
+                        onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'"
+                    >
+                    <div class="absolute top-2 right-2">
+                        <span class="badge bg-red-600 text-white">
+                            ${movie.year || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${movie.name}</h3>
+                    <p class="text-xs text-gray-400 truncate">${movie.origin_name || ''}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Search input handler
+    const searchInput = document.getElementById('searchInput');
+    searchInput.value = initialQuery || '';
+    
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+        const keyword = e.target.value.trim();
+        
+        clearTimeout(searchTimeout);
+        if (keyword.length > 2) {
+            searchTimeout = setTimeout(() => {
+                history.pushState(null, '', `/search?q=${encodeURIComponent(keyword)}`);
+                performSearch(keyword);
+            }, 500);
+        }
+    });
+    
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const keyword = e.target.value.trim();
+            if (keyword.length > 0) {
+                history.pushState(null, '', `/search?q=${encodeURIComponent(keyword)}`);
+                performSearch(keyword);
+            }
+        }
+    });
+    
+    // Initial search
+    if (initialQuery) {
+        performSearch(initialQuery);
+    } else {
+        document.getElementById('loadingState').classList.add('hidden');
+    }
+</script>
+{% endblock %}

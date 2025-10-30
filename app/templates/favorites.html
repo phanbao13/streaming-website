@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}My List - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-24">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">
+            <i class="fas fa-heart text-red-600 mr-2"></i>My List
+        </h1>
+        
+        <!-- Loading -->
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-red-600 mb-4"></i>
+            <p class="text-gray-400">Loading...</p>
+        </div>
+        
+        <!-- Favorites Grid -->
+        <div id="favoritesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 hidden">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <i class="fas fa-heart text-6xl text-gray-600 mb-4"></i>
+            <h2 class="text-2xl font-bold mb-2">Your list is empty</h2>
+            <p class="text-gray-400 mb-6">Add movies and TV shows to your list</p>
+            <a href="/" class="btn-primary px-6 py-3 rounded-lg inline-block">
+                Browse Movies
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_BASE = '/api/v1';
+    //const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login';
+    }
+    
+    async function loadFavorites() {
+        document.getElementById('loadingState').classList.remove('hidden');
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/favorites?limit=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            document.getElementById('loadingState').classList.add('hidden');
+            console.log(response);
+            if (response.ok) {
+                const favorites = await response.json();
+                
+                if (favorites.length > 0) {
+                    displayFavorites(favorites);
+                } else {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                }
+            } else if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+    }
+    
+    function displayFavorites(favorites) {
+        const html = favorites.map(item => `
+            <div class="bg-gray-800 rounded-lg overflow-hidden movie-card relative group">
+                <div class="relative" onclick="window.location.href='/movie/${item.movie_slug}'">
+                    <img 
+                        src="${item.poster_url || 'https://via.placeholder.com/300x450?text=No+Image'}" 
+                        alt="${item.movie_name}"
+                        class="w-full h-80 object-cover"
+                        onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'"
+                    >
+                    
+                    <!-- Remove Button -->
+                    <button 
+                        onclick="event.stopPropagation(); removeFavorite('${item.movie_slug}')"
+                        class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 w-8 h-8 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${item.movie_name}</h3>
+                    <p class="text-xs text-gray-500 mt-1">${formatDate(item.added_at)}</p>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('favoritesGrid').innerHTML = html;
+        document.getElementById('favoritesGrid').classList.remove('hidden');
+    }
+    
+    async function removeFavorite(slug) {
+        if (!confirm('Remove from your list?')) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/favorites/${slug}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                loadFavorites();
+            }
+        } catch (error) {
+            console.error('Error removing favorite:', error);
+        }
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString();
+    }
+    
+    document.addEventListener('DOMContentLoaded', loadFavorites);
+</script>
+{% endblock %}

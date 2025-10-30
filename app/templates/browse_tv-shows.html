@@ -1,0 +1,127 @@
+{% extends "base.html" %} {% block title %}TV Shows - StreamFlix{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-24">
+  <h1 class="text-3xl font-bold mb-8">
+    <i class="fas fa-tv text-red-600 mr-2"></i>TV Shows
+  </h1>
+
+  <!-- Series Grid -->
+  <div
+    id="seriesGrid"
+    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+    <!-- Loading Skeletons -->
+    <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+    <div class="skeleton bg-gray-800 rounded-lg h-80"></div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-center items-center space-x-4">
+    <button
+      id="prevPage"
+      class="bg-gray-800 hover:bg-gray-700 px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+      <i class="fas fa-chevron-left mr-2"></i>Previous
+    </button>
+
+    <span id="pageInfo" class="text-gray-400">Page 1</span>
+
+    <button
+      id="nextPage"
+      class="bg-gray-800 hover:bg-gray-700 px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+      Next<i class="fas fa-chevron-right ml-2"></i>
+    </button>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  const API_BASE = "/api/v1";
+  let currentPage = 1;
+
+  async function loadSeries(page = 1) {
+    try {
+      const response = await fetch(`${API_BASE}/movies/series?page=${page}`);
+      const data = await response.json();
+
+      if (data.success) {
+        displaySeries(data.data);
+        updatePagination(data.pagination);
+      }
+    } catch (error) {
+      console.error("Error loading series:", error);
+    }
+  }
+
+  function displaySeries(series) {
+    const html = series.map((show) => createSeriesCard(show)).join("");
+    document.getElementById("seriesGrid").innerHTML = html;
+  }
+
+  function createSeriesCard(show) {
+    const url = `https://phimimg.com/${show.poster_url || show.thumb_url}`;
+    return `
+            <div class="movie-card bg-gray-800 rounded-lg overflow-hidden" onclick="window.location.href='/movie/${
+              show.slug
+            }'">
+                <div class="relative">
+                    <img 
+                        src="${url}" 
+                        alt="${show.name}"
+                        class="w-full h-80 object-cover"
+                        onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'"
+                    >
+                    <div class="absolute top-2 right-2">
+                        <span class="badge bg-green-600 text-white">
+                            Series
+                        </span>
+                    </div>
+                    ${
+                      show.episode_total
+                        ? `
+                        <div class="absolute bottom-2 left-2">
+                            <span class="badge bg-blue-600 text-white">
+                                ${show.episode_total} Episodes
+                            </span>
+                        </div>
+                    `
+                        : ""
+                    }
+                </div>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${show.name}</h3>
+                    <p class="text-xs text-gray-400 truncate">${
+                      show.origin_name || ""
+                    }</p>
+                </div>
+            </div>
+        `;
+  }
+
+  function updatePagination(pagination) {
+    currentPage = pagination.currentPage;
+    document.getElementById(
+      "pageInfo"
+    ).textContent = `Page ${currentPage} of ${pagination.totalPages}`;
+
+    document.getElementById("prevPage").disabled = currentPage === 1;
+    document.getElementById("nextPage").disabled =
+      currentPage >= pagination.totalPages;
+  }
+
+  document.getElementById("prevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      loadSeries(currentPage - 1);
+      window.scrollTo(0, 0);
+    }
+  });
+
+  document.getElementById("nextPage").addEventListener("click", () => {
+    loadSeries(currentPage + 1);
+    window.scrollTo(0, 0);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => loadSeries(1));
+</script>
+{% endblock %}

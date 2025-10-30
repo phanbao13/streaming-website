@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Watch History - StreamFlix{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-24">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">
+                <i class="fas fa-history text-red-600 mr-2"></i>Watch History
+            </h1>
+            <button id="clearHistoryBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg transition">
+                <i class="fas fa-trash mr-2"></i>Clear All
+            </button>
+        </div>
+        
+        <!-- Loading -->
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-red-600 mb-4"></i>
+            <p class="text-gray-400">Loading...</p>
+        </div>
+        
+        <!-- History Grid -->
+        <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 hidden">
+            <!-- Will be populated by JavaScript -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <i class="fas fa-history text-6xl text-gray-600 mb-4"></i>
+            <h2 class="text-2xl font-bold mb-2">No watch history</h2>
+            <p class="text-gray-400 mb-6">Start watching to build your history</p>
+            <a href="/" class="btn-primary px-6 py-3 rounded-lg inline-block">
+                Browse Movies
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const API_BASE = '/api/v1';
+    //const token = localStorage.getItem('access_token');
+    
+    if (!token) {
+        window.location.href = '/login';
+    }
+    
+    async function loadWatchHistory() {
+        document.getElementById('loadingState').classList.remove('hidden');
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/watch-history?limit=100`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            document.getElementById('loadingState').classList.add('hidden');
+            
+            if (response.ok) {
+                const history = await response.json();
+                
+                if (history.length > 0) {
+                    displayHistory(history);
+                } else {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                }
+            } else if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error loading watch history:', error);
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+    }
+    
+    function displayHistory(history) {
+        const html = history.map(item => `
+            <div class="bg-gray-800 rounded-lg overflow-hidden movie-card relative group">
+                <div class="relative h-72 bg-gray-700 flex items-center justify-center" onclick="window.location.href='/watch/${item.movie_slug}${item.episode_slug ? '?episode=' + item.episode_slug : ''}'">
+                    <i class="fas fa-play-circle text-6xl text-gray-500"></i>
+                    
+                    <!-- Progress Bar -->
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
+                        <div class="h-full bg-red-600" style="width: ${Math.min(100, (item.progress / 1800) * 100)}%"></div>
+                    </div>
+                    
+                    <!-- Delete Button -->
+                    <button 
+                        onclick="event.stopPropagation(); deleteHistory(${item.id})"
+                        class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 w-8 h-8 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate">${item.movie_name}</h3>
+                    ${item.episode_name ? `<p class="text-xs text-gray-400 truncate">${item.episode_name}</p>` : ''}
+                    <p class="text-xs text-gray-500 mt-1">${formatDate(item.last_watched)}</p>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('historyGrid').innerHTML = html;
+        document.getElementById('historyGrid').classList.remove('hidden');
+    }
+    
+    async function deleteHistory(id) {
+        if (!confirm('Remove this item from watch history?')) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/watch-history/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                loadWatchHistory();
+            }
+        } catch (error) {
+            console.error('Error deleting history:', error);
+        }
+    }
+    
+    document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to clear all watch history?')) return;
+        
+        try {
+            const response = await fetch(`${API_BASE}/users/watch-history`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const history = await response.json();
+                
+                for (const item of history) {
+                    await fetch(`${API_BASE}/users/watch-history/${item.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+                
+                loadWatchHistory();
+            }
+        } catch (error) {
+            console.error('Error clearing history:', error);
+        }
+    });
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days === 0) return 'Today';
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days} days ago`;
+        
+        return date.toLocaleDateString();
+    }
+    
+    document.addEventListener('DOMContentLoaded', loadWatchHistory);
+</script>
+{% endblock %}
