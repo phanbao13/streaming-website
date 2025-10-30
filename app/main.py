@@ -77,6 +77,62 @@ async def watch_page(request: Request, slug: str):
     return templates.TemplateResponse("player.html", {"request": request, "slug": slug})
 
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+
+@app.get("/search", response_class=HTMLResponse)
+async def search_page(request: Request):
+    return templates.TemplateResponse("search.html", {"request": request})
+
+
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    return templates.TemplateResponse("profile.html", {"request": request})
+
+
+@app.get("/watch-history", response_class=HTMLResponse)
+async def watch_history_page(request: Request):
+    return templates.TemplateResponse("watch_history.html", {"request": request})
+
+
+@app.get("/favorites", response_class=HTMLResponse)
+async def favorites_page(request: Request):
+    return templates.TemplateResponse("favorites.html", {"request": request})
+
+
+@app.get("/my-list", response_class=HTMLResponse)
+async def my_list_page(request: Request):
+    return templates.TemplateResponse("favorites.html", {"request": request})
+
+
+@app.get("/browse/movies", response_class=HTMLResponse)
+async def browse_movies_page(request: Request):
+    return templates.TemplateResponse("browse_movies.html", {"request": request})
+
+
+@app.get("/browse/series", response_class=HTMLResponse)
+async def browse_series_page(request: Request):
+    return templates.TemplateResponse("browse_series.html", {"request": request})
+
+@app.get("/browse/tv-shows", response_class=HTMLResponse)
+async def browse_tv_shows_page(request: Request):
+    return templates.TemplateResponse("browse_tv-shows.html", {"request": request})
+
+@app.get("/browse/anime", response_class=HTMLResponse)
+async def browse_anime_page(request: Request):
+    return templates.TemplateResponse("browse_anime.html", {"request": request})
+
+@app.get("/browse/countries/{slug}", response_class=HTMLResponse)
+async def browse_countries_page(request: Request, slug: str):
+    return templates.TemplateResponse("browse_countries.html", {"request": request, "slug": slug})
+
 if __name__ == "__main__":
     import uvicorn
 
